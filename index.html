@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcard & Quiz Mandarin (HSK)</title>
+  <!-- Icon Web / Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px;
+    }
+    h1 { margin-bottom: 16px; color: #333; font-size: 24px; text-align: center; }
+
+    /* Welcome / Input Nama Modal */
+    .welcome-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;
+    }
+    .welcome-box {
+      background: white; border-radius: 16px; padding: 30px 24px; width: 90%; max-width: 400px;
+      text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .welcome-box h2 { color: #2d3748; margin-bottom: 10px; font-size: 22px; }
+    .welcome-box p { color: #718096; font-size: 14px; margin-bottom: 20px; }
+    .welcome-input {
+      width: 100%; padding: 12px; font-size: 15px; border: 2px solid #e2e8f0;
+      border-radius: 8px; margin-bottom: 16px; outline: none; text-align: center;
+    }
+    .welcome-input:focus { border-color: #3182ce; }
+    .btn-enter {
+      width: 100%; padding: 12px; font-size: 16px; font-weight: bold;
+      background: #3182ce; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-enter:hover { background: #2b6cb0; }
+
+    /* User Info Bar */
+    .user-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; max-width: 460px; background: white; padding: 10px 16px;
+      border-radius: 10px; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #4a5568;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .btn-change-user {
+      background: #edf2f7; border: none; padding: 4px 10px; border-radius: 6px;
+      font-size: 12px; color: #e53e3e; cursor: pointer; font-weight: bold;
+    }
+
+    /* Mode Selector Tab */
+    .mode-tab {
+      display: flex; gap: 10px; margin-bottom: 16px; background: #e2e8f0; padding: 4px; border-radius: 10px;
+    }
+    .btn-tab {
+      padding: 8px 16px; border: none; font-weight: bold; background: transparent; color: #4a5568;
+      border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-tab.active { background: #3182ce; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+
+    /* Control Panel */
+    .controls {
+      background: white; padding: 16px 20px; border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px;
+      width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .control-group { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .control-group label { font-size: 13px; font-weight: 600; color: #4a5568; }
+    .btn-group { display: flex; gap: 4px; background: #edf2f7; padding: 4px; border-radius: 8px; flex-wrap: wrap; }
+    .btn-option {
+      padding: 6px 10px; font-size: 12px; font-weight: 600; border: none;
+      background: transparent; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-option.active { background: #3182ce; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+    .select-hsk {
+      padding: 6px 10px; font-size: 12px; font-weight: bold; border-radius: 6px;
+      border: 1px solid #cbd5e0; background: white; color: #2d3748; outline: none;
+    }
+
+    .btn-manage {
+      width: 100%; padding: 8px; font-size: 13px; font-weight: 600;
+      background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-manage:hover { background: #2d3748; }
+
+    /* Flashcard UI */
+    .main-box { width: 100%; max-width: 460px; }
+    .card-container { perspective: 1000px; margin-bottom: 16px; }
+    .card {
+      background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; text-align: center; padding: 30px 20px; min-height: 240px;
+      transition: transform 0.2s, box-shadow 0.2s; border: 2px solid #eef2f5; position: relative;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.12); }
+    .badge-hsk {
+      position: absolute; top: 12px; right: 16px; background: #feebc8; color: #c05621;
+      font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px;
+    }
+    .main-text { font-size: 34px; font-weight: bold; color: #1a202c; margin-bottom: 16px; word-break: break-word; }
+    .divider { width: 40px; height: 3px; background: #e2e8f0; margin-bottom: 16px; border-radius: 2px; }
+    .sub-text { font-size: 20px; color: #2b6cb0; margin-bottom: 8px; font-weight: 500; word-break: break-word; }
+    .arti { font-size: 18px; color: #2f855a; font-weight: 600; word-break: break-word; }
+    .hidden { visibility: hidden; opacity: 0; }
+    .visible { visibility: visible; opacity: 1; }
+
+    .nav-buttons { display: flex; gap: 10px; width: 100%; }
+    .btn-nav {
+      flex: 1; padding: 12px; font-size: 14px; font-weight: bold; border: none;
+      color: white; border-radius: 10px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-prev { background-color: #718096; }
+    .btn-prev:hover { background-color: #4a5568; }
+    .btn-next { background-color: #3182ce; }
+    .btn-next:hover { background-color: #2b6cb0; }
+
+    /* Quiz Mode UI */
+    .quiz-container {
+      background: white; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center; display: none; flex-direction: column; gap: 16px;
+    }
+    .quiz-q-box { background: #f7fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .quiz-question { font-size: 28px; font-weight: bold; color: #2d3748; word-break: break-word; }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .btn-quiz-opt {
+      padding: 14px; font-size: 16px; font-weight: 600; border: 2px solid #e2e8f0;
+      background: white; border-radius: 10px; cursor: pointer; transition: 0.2s; text-align: center;
+    }
+    .btn-quiz-opt:hover { background: #ebf8ff; border-color: #3182ce; }
+    .btn-quiz-opt.correct { background: #c6f6d5 !important; border-color: #38a169 !important; color: #22543d; }
+    .btn-quiz-opt.wrong { background: #fed7d7 !important; border-color: #e53e3e !important; color: #742a2a; }
+
+    .timer-bar-box { width: 100%; background: #edf2f7; height: 6px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .timer-bar { width: 100%; height: 100%; background: #e53e3e; transition: width 1s linear; }
+
+    .quiz-input-num { width: 60px; padding: 6px; font-size: 13px; border: 1px solid #cbd5e0; border-radius: 6px; text-align: center; }
+    .btn-start-quiz {
+      padding: 12px 24px; background: #38a169; color: white; border: none; font-weight: bold;
+      font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-start-quiz:hover { background: #2f855a; }
+    .btn-cancel-quiz {
+      background: transparent; border: 1px solid #e53e3e; color: #e53e3e; padding: 6px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+
+    .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; text-align: left; }
+    .review-table th, .review-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+    .review-table th { background: #f7fafc; color: #4a5568; }
+    .res-correct { color: #38a169; font-weight: bold; }
+    .res-wrong { color: #e53e3e; font-weight: bold; }
+
+    .hint { color: #718096; font-size: 13px; margin-top: 12px; text-align: center; }
+    .counter { margin-top: 10px; font-size: 12px; color: #a0aec0; text-align: center; }
+
+    /* Footer */
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal-content {
+      background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 750px;
+      max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #a0aec0; }
+    .db-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .db-table th, .db-table td { border: 1px solid #e2e8f0; padding: 8px 10px; font-size: 13px; }
+    .db-table th { background: #edf2f7; text-align: left; }
+    .db-table input { width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
+    .btn-delete { background: #e53e3e; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+    .excel-import { margin-top: 20px; padding: 15px; background: #f7fafc; border: 1px dashed #cbd5e0; border-radius: 8px; }
+    .excel-import textarea { width: 100%; height: 70px; padding: 8px; font-size: 12px; margin-top: 8px; border-radius: 4px; border: 1px solid #cbd5e0; }
+    .modal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .btn-action { padding: 10px 18px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-add { background: #38a169; color: white; }
+    .btn-save { background: #3182ce; color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- WELCOME MODAL -->
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div class="welcome-box">
+      <h2>👋 欢迎！ Selamat Datang</h2>
+      <p>Silakan masukkan nama kamu sebelum belajar:</p>
+      <input type="text" id="userNameInput" class="welcome-input" placeholder="Masukkan Nama Kamu..." autofocus>
+      <button class="btn-enter" onclick="submitName()">Mulai Belajar ➔</button>
+    </div>
+  </div>
+
+  <h1>📖 Flashcard & Quiz Mandarin</h1>
+
+  <!-- User Info Bar -->
+  <div class="user-bar">
+    <span>👤 Siswa: <strong id="currentUserDisplay">--</strong></span>
+    <button class="btn-change-user" onclick="resetUserSession()">Ganti Nama</button>
+  </div>
+
+  <!-- Mode Tab -->
+  <div class="mode-tab">
+    <button class="btn-tab active" id="tab-flashcard" onclick="switchMainView('flashcard')">🎴 Flashcard</button>
+    <button class="btn-tab" id="tab-quiz" onclick="switchMainView('quiz')">📝 Kuis Pilihan Ganda</button>
+  </div>
+
+  <!-- Controls Panel -->
+  <div class="controls">
+    <div class="control-group">
+      <label>Database & HSK:</label>
+      <div style="display: flex; gap: 6px;">
+        <div class="btn-group">
+          <button class="btn-option active" id="db-kata" onclick="setDatabase('kata.json', 'db-kata')">Kata</button>
+          <button class="btn-option" id="db-kalimat" onclick="setDatabase('kalimat.json', 'db-kalimat')">Kalimat</button>
+        </div>
+        <select id="hskFilter" class="select-hsk" onchange="filterHskLevel()">
+          <option value="all">Semua HSK</option>
+          <option value="1">HSK 1</option>
+          <option value="2">HSK 2</option>
+          <option value="3">HSK 3</option>
+          <option value="4">HSK 4</option>
+          <option value="5">HSK 5</option>
+          <option value="6">HSK 6</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Opsi Khusus Flashcard -->
+    <div class="control-group" id="fc-controls">
+      <label>Tampilkan Utama:</label>
+      <div class="btn-group">
+        <button class="btn-option active" id="mode-hanzi" onclick="setMode('hanzi', 'mode-hanzi')">Hanzi</button>
+        <button class="btn-option" id="mode-pinyin" onclick="setMode('pinyin', 'mode-pinyin')">Pinyin</button>
+        <button class="btn-option" id="mode-arti" onclick="setMode('arti', 'mode-arti')">Arti</button>
+      </div>
+    </div>
+
+    <!-- Opsi Khusus Kuis -->
+    <div id="quiz-controls" style="display: none; flex-direction: column; gap: 10px;">
+      <div class="control-group">
+        <label>Soal ➔ Jawaban:</label>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <select id="quiz-q-type" class="select-hsk">
+            <option value="hanzi">Hanzi</option>
+            <option value="pinyin">Pinyin</option>
+            <option value="arti">Arti</option>
+          </select>
+          <span>➔</span>
+          <select id="quiz-a-type" class="select-hsk">
+            <option value="arti" selected>Arti</option>
+            <option value="pinyin">Pinyin</option>
+            <option value="hanzi">Hanzi</option>
+          </select>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Jumlah Soal & Waktu:</label>
+        <div style="display: flex; gap: 6px; align-items: center; font-size: 12px;">
+          <input type="number" id="quiz-count" class="quiz-input-num" value="5" min="1"> Soal
+          <input type="number" id="quiz-timer-sec" class="quiz-input-num" value="15" min="5"> Detik
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-manage" onclick="openLoginModal()">⚙️ Kelola / Edit Database (Laoshi)</button>
+  </div>
+
+  <div class="main-box">
+    <!-- VIEW 1: FLASHCARD -->
+    <div id="view-flashcard">
+      <div class="card-container">
+        <div class="card" onclick="toggleAnswer()">
+          <span id="card-hsk-badge" class="badge-hsk">HSK 1</span>
+          <div id="main-text" class="main-text">Memuat data...</div>
+          <div class="divider"></div>
+          <div id="sub-text" class="sub-text hidden">--</div>
+          <div id="arti" class="arti hidden">--</div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn-nav btn-prev" onclick="getPrevCard()">⬅️ Sebelumnya</button>
+        <button class="btn-nav btn-next" onclick="getNextCard()">Berikutnya ➔</button>
+      </div>
+      <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban</p>
+    </div>
+
+    <!-- VIEW 2: QUIZ -->
+    <div id="view-quiz" class="quiz-container">
+      <div id="quiz-start-screen">
+        <h3>Pilihan Ganda Ready</h3>
+        <p style="color: #718096; margin: 10px 0 20px 0; font-size: 14px;">Uji pemahaman kosakata dengan kuis interaktif.</p>
+        <button class="btn-start-quiz" onclick="startQuiz()">Mulai Kuis 🚀</button>
+      </div>
+
+      <div id="quiz-play-screen" style="display: none;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #718096; font-weight: 600;">
+          <span id="quiz-progress">Soal 1 / 5</span>
+          <span id="quiz-timer-text">⏱ 15 detik</span>
+        </div>
+
+        <div class="timer-bar-box">
+          <div id="timerBar" class="timer-bar"></div>
+        </div>
+
+        <div class="quiz-q-box" style="margin-top: 12px;">
+          <div id="quiz-q-text" class="quiz-question">--</div>
+        </div>
+
+        <div class="quiz-options" id="quiz-options"></div>
+
+        <button class="btn-cancel-quiz" onclick="cancelQuiz()">🔄 Reset / Batal Kuis</button>
+      </div>
+
+      <div id="quiz-result-screen" style="display: none;">
+        <h2>🎉 Kuis Selesai!</h2>
+        <div style="font-size: 40px; font-weight: bold; color: #2b6cb0; margin: 10px 0;" id="quiz-final-score">0 / 100</div>
+        <p id="quiz-summary-text" style="color: #4a5568; margin-bottom: 15px; font-size: 14px;"></p>
+        
+        <h4 style="text-align: left; color: #2d3748; margin-top: 10px;">Review Jawaban:</h4>
+        <div style="max-height: 200px; overflow-y: auto;">
+          <table class="review-table">
+            <thead>
+              <tr>
+                <th>Soal</th>
+                <th>Pilihanmu</th>
+                <th>Kunci</th>
+              </tr>
+            </thead>
+            <tbody id="reviewTableBody"></tbody>
+          </table>
+        </div>
+
+        <button class="btn-start-quiz" style="margin-top: 15px;" onclick="startQuiz()">Ulangi Kuis 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="counter" class="counter">Total item filtered: 0</div>
+
+  <!-- Footer -->
+  <footer>
+    fùxí 复习 - Semangat Belajar Mandarin
+  </footer>
+
+  <!-- MODAL EDIT DATABASE (KHUSUS LAOSHI) -->
+  <div class="modal-overlay" id="dbModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Kelola Database</h2>
+        <button class="btn-close" onclick="closeModal()">✕</button>
+      </div>
+
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>Hanzi</th>
+            <th>Pinyin</th>
+            <th>Arti</th>
+            <th style="width: 70px;">HSK</th>
+            <th style="width: 40px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div class="excel-import">
+        <strong>📋 Quick Paste dari Excel (4 Kolom: Hanzi | Pinyin | Arti | HSK Angka)</strong>
+        <p style="font-size: 11px; color: #718096; margin-top: 2px;">Contoh isi HSK di Excel cukup tulis angka: 1, 2, 3, 4, 5, atau 6</p>
+        <textarea id="excelPaste" placeholder="Copy sel dari Excel lalu paste di sini..."></textarea>
+        <button class="btn-action btn-add" style="margin-top: 8px; font-size: 12px; padding: 6px 12px;" onclick="processExcelPaste()">+ Tambahkan Data Paste</button>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-action btn-add" onclick="addRow()">+ Tambah Baris Kosong</button>
+        <button class="btn-action btn-save" onclick="exportJsonForGithub()">💾 Generate JSON untuk GitHub</button>
+      </div>
+
+      <div id="exportArea" style="display:none; margin-top:15px; background:#edf2f7; padding:12px; border-radius:8px;">
+        <strong style="font-size:13px; color:#2d3748;">Copy teks JSON di bawah ini, lalu paste ke file <span id="currentFileName">kata.json</span> di GitHub:</strong>
+        <textarea id="jsonOutput" readonly style="width:100%; height:120px; font-family:monospace; font-size:11px; margin-top:8px; padding:6px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rawDatabase = [];
+    let database = [];
+    let currentDbFile = 'kata.json';
+    let currentMode = 'hanzi';
+    let selectedHsk = 'all';
+    let currentUser = '';
+    let showAnswer = false;
+
+    // Flashcard History Tracking
+    let historyStack = [];
+    let historyIndex = -1;
+
+    // Quiz Tracking
+    let quizQuestions = [];
+    let quizCurrentIdx = 0;
+    let quizScore = 0;
+    let quizAnswered = false;
+    let quizTimerInterval = null;
+    let quizTimeLeft = 0;
+    let quizUserAnswers = [];
+
+    function submitName() {
+      const input = document.getElementById('userNameInput').value.trim();
+      if (!input) {
+        alert("Silakan masukkan nama terlebih dahulu!");
+        return;
+      }
+      currentUser = input;
+      document.getElementById('currentUserDisplay').innerText = currentUser;
+      document.getElementById('welcomeOverlay').style.display = 'none';
+      loadDatabase();
+    }
+
+    function resetUserSession() {
+      document.getElementById('userNameInput').value = '';
+      document.getElementById('welcomeOverlay').style.display = 'flex';
+    }
+
+    async function loadDatabase() {
+      try {
+        const response = await fetch(currentDbFile);
+        rawDatabase = await response.json();
+        applyHskFilter();
+      } catch (error) {
+        document.getElementById('main-text').innerText = "Gagal membaca database!";
+      }
+    }
+
+    function applyHskFilter() {
+      if (selectedHsk === 'all') {
+        database = [...rawDatabase];
+      } else {
+        database = rawDatabase.filter(item => String(item.hsk || '1').trim() === selectedHsk);
+      }
+
+      document.getElementById('counter').innerText = `Total item filtered: ${database.length}`;
+      historyStack = [];
+      historyIndex = -1;
+      getNextCard();
+    }
+
+    function filterHskLevel() {
+      selectedHsk = document.getElementById('hskFilter').value;
+      applyHskFilter();
+    }
+
+    function switchMainView(view) {
+      document.querySelectorAll('.btn-tab').forEach(btn => btn.classList.remove('active'));
+      if (view === 'flashcard') {
+        document.getElementById('tab-flashcard').classList.add('active');
+        document.getElementById('view-flashcard').style.display = 'block';
+        document.getElementById('view-quiz').style.display = 'none';
+        document.getElementById('fc-controls').style.display = 'flex';
+        document.getElementById('quiz-controls').style.display = 'none';
+      } else {
+        document.getElementById('tab-quiz').classList.add('active');
+        document.getElementById('view-flashcard').style.display = 'none';
+        document.getElementById('view-quiz').style.display = 'flex';
+        document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('quiz-controls').style.display = 'flex';
+      }
+    }
+
+    function setDatabase(dbFile, btnId) {
+      currentDbFile = dbFile;
+      document.querySelectorAll('#db-kata, #db-kalimat').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(btnId).classList.add('active');
+      loadDatabase();
+    }
+
+    function setMode(mode, btnId) {
+      currentMode = mode;
+      document.querySelectorAll('#mode-hanzi, #mode-pinyin, #mode-arti').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(btnId).classList.add('active');
+      renderCard();
+    }
+
+    /* FLASHCARD LOGIC */
+    function getNextCard() {
+      if (database.length === 0) {
+        document.getElementById('main-text').innerText = "Data Kosong";
+        document.getElementById('sub-text').innerText = "--";
+        document.getElementById('arti').innerText = "--";
+        return;
+      }
+
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+      } else {
+        let randomIndex;
+        if (database.length > 1) {
+          const lastIdx = historyStack.length > 0 ? historyStack[historyStack.length - 1] : -1;
+          do { randomIndex = Math.floor(Math.random() * database.length); } while (randomIndex === lastIdx);
+        } else { randomIndex = 0; }
+        
+        historyStack.push(randomIndex);
+        historyIndex = historyStack.length - 1;
+      }
+
+      showAnswer = false;
+      renderCard();
+    }
+
+    function getPrevCard() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        showAnswer = false;
+        renderCard();
+      }
+    }
+
+    function renderCard() {
+      if (historyIndex < 0 || !database[historyStack[historyIndex]]) return;
+
+      const item = database[historyStack[historyIndex]];
+      document.getElementById('card-hsk-badge').innerText = `HSK ${item.hsk || '1'}`;
+
+      const mainTextEl = document.getElementById('main-text');
+      const subTextEl = document.getElementById('sub-text');
+      const artiEl = document.getElementById('arti');
+
+      if (currentMode === 'hanzi') {
+        mainTextEl.innerText = item.hanzi;
+        subTextEl.innerText = item.pinyin;
+        artiEl.innerText = item.arti;
+      } else if (currentMode === 'pinyin') {
+        mainTextEl.innerText = item.pinyin;
+        subTextEl.innerText = item.hanzi;
+        artiEl.innerText = item.arti;
+      } else if (currentMode === 'arti') {
+        mainTextEl.innerText = item.arti;
+        subTextEl.innerText = item.hanzi;
+        artiEl.innerText = item.pinyin;
+      }
+
+      updateVisibility();
+    }
+
+    function toggleAnswer() { showAnswer = !showAnswer; updateVisibility(); }
+
+    function updateVisibility() {
+      const subTextEl = document.getElementById('sub-text');
+      const artiEl = document.getElementById('arti');
+      if (showAnswer) {
+        subTextEl.className = 'sub-text visible';
+        artiEl.className = 'arti visible';
+      } else {
+        subTextEl.className = 'sub-text hidden';
+        artiEl.className = 'arti hidden';
+      }
+    }
+
+    /* QUIZ LOGIC */
+    function startQuiz() {
+      if (database.length < 3) {
+        alert("Database pada HSK ini minimal harus berisi 3 item untuk kuis!");
+        return;
+      }
+
+      const qType = document.getElementById('quiz-q-type').value;
+      const aType = document.getElementById('quiz-a-type').value;
+
+      if (qType === aType) {
+        alert("Tipe Soal dan Tipe Jawaban tidak boleh sama!");
+        return;
+      }
+
+      const reqCount = parseInt(document.getElementById('quiz-count').value) || 5;
+      const count = Math.min(reqCount, database.length);
+
+      let shuffled = [...database].sort(() => 0.5 - Math.random());
+      quizQuestions = shuffled.slice(0, count);
+
+      quizCurrentIdx = 0;
+      quizScore = 0;
+      quizUserAnswers = [];
+
+      document.getElementById('quiz-start-screen').style.display = 'none';
+      document.getElementById('quiz-result-screen').style.display = 'none';
+      document.getElementById('quiz-play-screen').style.display = 'block';
+
+      showQuizQuestion();
+    }
+
+    function showQuizQuestion() {
+      quizAnswered = false;
+      clearInterval(quizTimerInterval);
+
+      const qType = document.getElementById('quiz-q-type').value;
+      const aType = document.getElementById('quiz-a-type').value;
+      const item = quizQuestions[quizCurrentIdx];
+
+      document.getElementById('quiz-progress').innerText = `Soal ${quizCurrentIdx + 1} / ${quizQuestions.length}`;
+      document.getElementById('quiz-q-text').innerText = item[qType];
+
+      let options = [item[aType]];
+      let others = database.filter(d => d[aType] !== item[aType]);
+      others.sort(() => 0.5 - Math.random());
+
+      options.push(others[0][aType]);
+      options.push(others[1][aType]);
+      options.sort(() => 0.5 - Math.random());
+
+      const optContainer = document.getElementById('quiz-options');
+      optContainer.innerHTML = '';
+
+      options.forEach(optText => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-quiz-opt';
+        btn.innerText = optText;
+        btn.onclick = () => checkQuizAnswer(btn, optText, item[aType], item[qType]);
+        optContainer.appendChild(btn);
+      });
+
+      const secLimit = parseInt(document.getElementById('quiz-timer-sec').value) || 15;
+      quizTimeLeft = secLimit;
+      const timerText = document.getElementById('quiz-timer-text');
+      const timerBar = document.getElementById('timerBar');
+
+      timerText.innerText = `⏱ ${quizTimeLeft} detik`;
+      timerBar.style.width = '100%';
+
+      quizTimerInterval = setInterval(() => {
+        quizTimeLeft--;
+        timerText.innerText = `⏱ ${quizTimeLeft} detik`;
+        timerBar.style.width = `${(quizTimeLeft / secLimit) * 100}%`;
+
+        if (quizTimeLeft <= 0) {
+          clearInterval(quizTimerInterval);
+          handleTimeOut(item[aType], item[qType]);
+        }
+      }, 1000);
+    }
+
+    function checkQuizAnswer(selectedBtn, selectedText, correctText, questionText) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      clearInterval(quizTimerInterval);
+
+      const isCorrect = (selectedText === correctText);
+      quizUserAnswers.push({
+        question: questionText,
+        userAns: selectedText,
+        correctAns: correctText,
+        isCorrect: isCorrect
+      });
+
+      if (isCorrect) {
+        selectedBtn.classList.add('correct');
+        quizScore += Math.round(100 / quizQuestions.length);
+      } else {
+        selectedBtn.classList.add('wrong');
+        document.querySelectorAll('.btn-quiz-opt').forEach(b => {
+          if (b.innerText === correctText) b.classList.add('correct');
+        });
+      }
+
+      setTimeout(nextQuizStep, 1200);
+    }
+
+    function handleTimeOut(correctText, questionText) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+
+      quizUserAnswers.push({
+        question: questionText,
+        userAns: "(Waktu Habis)",
+        correctAns: correctText,
+        isCorrect: false
+      });
+
+      document.querySelectorAll('.btn-quiz-opt').forEach(b => {
+        if (b.innerText === correctText) b.classList.add('correct');
+      });
+
+      setTimeout(nextQuizStep, 1200);
+    }
+
+    function nextQuizStep() {
+      quizCurrentIdx++;
+      if (quizCurrentIdx < quizQuestions.length) {
+        showQuizQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function cancelQuiz() {
+      clearInterval(quizTimerInterval);
+      document.getElementById('quiz-play-screen').style.display = 'none';
+      document.getElementById('quiz-start-screen').style.display = 'block';
+    }
+
+    function finishQuiz() {
+      clearInterval(quizTimerInterval);
+      document.getElementById('quiz-play-screen').style.display = 'none';
+      document.getElementById('quiz-result-screen').style.display = 'block';
+
+      if (quizScore > 100) quizScore = 100;
+      document.getElementById('quiz-final-score').innerText = `${quizScore} / 100`;
+
+      let summary = "";
+      if (quizScore >= 80) summary = `Hebat sekali ${currentUser}! Pemahaman kamu sangat bagus! 🎉`;
+      else if (quizScore >= 50) summary = `Cukup baik ${currentUser}! Tingkatkan lagi latihannya! 💪`;
+      else summary = `Jangan menyerah ${currentUser}, coba review flashcard lagi ya! 😉`;
+
+      document.getElementById('quiz-summary-text').innerText = summary;
+
+      const tbody = document.getElementById('reviewTableBody');
+      tbody.innerHTML = '';
+      quizUserAnswers.forEach(ans => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${ans.question}</strong></td>
+          <td class="${ans.isCorrect ? 'res-correct' : 'res-wrong'}">${ans.userAns}</td>
+          <td>${ans.correctAns}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* MODAL LAOSHI LOGIN & EDITOR */
+    function openLoginModal() {
+      const uid = prompt("Masukkan UID:");
+      const pass = prompt("Masukkan Password:");
+
+      if (uid === 'laoshi' && pass === 'nihao') {
+        openModal();
+      } else {
+        alert("UID atau Password salah!");
+      }
+    }
+
+    function openModal() {
+      document.getElementById('modalTitle').innerText = `Kelola Database (${currentDbFile})`;
+      document.getElementById('currentFileName').innerText = currentDbFile;
+      document.getElementById('exportArea').style.display = 'none';
+      renderTable();
+      document.getElementById('dbModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('dbModal').style.display = 'none'; }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      rawDatabase.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" value="${escapeHtml(item.hanzi)}" data-key="hanzi" data-index="${index}"></td>
+          <td><input type="text" value="${escapeHtml(item.pinyin)}" data-key="pinyin" data-index="${index}"></td>
+          <td><input type="text" value="${escapeHtml(item.arti)}" data-key="arti" data-index="${index}"></td>
+          <td><input type="number" min="1" max="6" value="${escapeHtml(String(item.hsk || '1'))}" data-key="hsk" data-index="${index}" style="text-align:center;"></td>
+          <td><button class="btn-delete" onclick="deleteRow(${index})">🗑</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(text) { return (text || '').replace(/"/g, '&quot;'); }
+
+    function addRow() {
+      rawDatabase.push({ hanzi: '', pinyin: '', arti: '', hsk: '1' });
+      renderTable();
+    }
+
+    function deleteRow(index) {
+      rawDatabase.splice(index, 1);
+      renderTable();
+    }
+
+    function processExcelPaste() {
+      const text = document.getElementById('excelPaste').value.trim();
+      if (!text) return;
+
+      const rows = text.split('\n');
+      rows.forEach(row => {
+        const cols = row.split('\t');
+        if (cols.length >= 2) {
+          rawDatabase.push({
+            hanzi: (cols[0] || '').trim(),
+            pinyin: (cols[1] || '').trim(),
+            arti: (cols[2] || '').trim(),
+            hsk: String((cols[3] || '1')).trim()
+          });
+        }
+      });
+
+      document.getElementById('excelPaste').value = '';
+      renderTable();
+    }
+
+    function exportJsonForGithub() {
+      const inputs = document.querySelectorAll('#tableBody input');
+      inputs.forEach(input => {
+        const idx = input.getAttribute('data-index');
+        const key = input.getAttribute('data-key');
+        rawDatabase[idx][key] = input.value.trim();
+      });
+
+      rawDatabase = rawDatabase.filter(item => item.hanzi || item.pinyin || item.arti);
+
+      const jsonString = JSON.stringify(rawDatabase, null, 2);
+      document.getElementById('jsonOutput').value = jsonString;
+      document.getElementById('exportArea').style.display = 'block';
+
+      applyHskFilter();
+    }
+
+    window.onload = function() {
+      document.getElementById('welcomeOverlay').style.display = 'flex';
+    };
+  </script>
+</body>
+</html>
