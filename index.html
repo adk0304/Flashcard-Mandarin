@@ -41,7 +41,7 @@
     /* User Info Bar */
     .user-bar {
       display: flex; justify-content: space-between; align-items: center;
-      width: 100%; max-width: 460px; background: white; padding: 10px 16px;
+      width: 100%; max-width: 480px; background: white; padding: 10px 16px;
       border-radius: 10px; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #4a5568;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -52,11 +52,12 @@
 
     /* Mode Selector Tab */
     .mode-tab {
-      display: flex; gap: 10px; margin-bottom: 16px; background: #e2e8f0; padding: 4px; border-radius: 10px;
+      display: flex; gap: 6px; margin-bottom: 16px; background: #e2e8f0; padding: 4px; border-radius: 10px;
+      width: 100%; max-width: 480px; justify-content: center;
     }
     .btn-tab {
-      padding: 8px 16px; border: none; font-weight: bold; background: transparent; color: #4a5568;
-      border-radius: 8px; cursor: pointer; transition: 0.2s;
+      flex: 1; padding: 8px 10px; border: none; font-weight: bold; background: transparent; color: #4a5568;
+      border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 13px; text-align: center;
     }
     .btn-tab.active { background: #3182ce; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
@@ -64,7 +65,7 @@
     .controls {
       background: white; padding: 16px 20px; border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px;
-      width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px;
+      width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px;
     }
     .control-group { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
     .control-group label { font-size: 13px; font-weight: 600; color: #4a5568; }
@@ -87,7 +88,7 @@
     .btn-manage:hover { background: #2d3748; }
 
     /* Flashcard UI */
-    .main-box { width: 100%; max-width: 460px; }
+    .main-box { width: 100%; max-width: 480px; }
     .card-container { perspective: 1000px; margin-bottom: 16px; }
     .card {
       background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -153,6 +154,22 @@
     .res-correct { color: #38a169; font-weight: bold; }
     .res-wrong { color: #e53e3e; font-weight: bold; }
 
+    /* View Materi (Daftar Isi) UI */
+    .materi-container {
+      background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      display: none; flex-direction: column; gap: 12px;
+    }
+    .materi-search {
+      width: 100%; padding: 10px 14px; font-size: 13px; border: 1px solid #cbd5e0;
+      border-radius: 8px; outline: none;
+    }
+    .materi-search:focus { border-color: #3182ce; }
+    .materi-table-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .materi-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    .materi-table th, .materi-table td { padding: 10px 12px; border-bottom: 1px solid #edf2f7; }
+    .materi-table th { background: #f7fafc; color: #4a5568; position: sticky; top: 0; z-index: 10; }
+    .materi-table tr:hover { background: #f8fafc; }
+
     .hint { color: #718096; font-size: 13px; margin-top: 12px; text-align: center; }
     .counter { margin-top: 10px; font-size: 12px; color: #a0aec0; text-align: center; }
 
@@ -210,10 +227,11 @@
     <button class="btn-change-user" onclick="resetUserSession()">Ganti Nama</button>
   </div>
 
-  <!-- Mode Tab -->
+  <!-- Mode Tab Navigasi Utama -->
   <div class="mode-tab">
     <button class="btn-tab active" id="tab-flashcard" onclick="switchMainView('flashcard')">🎴 Flashcard</button>
     <button class="btn-tab" id="tab-quiz" onclick="switchMainView('quiz')">📝 Kuis Pilihan Ganda</button>
+    <button class="btn-tab" id="tab-materi" onclick="switchMainView('materi')">📚 Isi Materi</button>
   </div>
 
   <!-- Controls Panel -->
@@ -346,6 +364,25 @@
         <button class="btn-start-quiz" style="margin-top: 15px;" onclick="startQuiz()">Ulangi Kuis 🔄</button>
       </div>
     </div>
+
+    <!-- VIEW 3: ISI MATERI -->
+    <div id="view-materi" class="materi-container">
+      <input type="text" id="materiSearchInput" class="materi-search" placeholder="🔍 Cari Hanzi, Pinyin, atau Arti..." oninput="renderMateriTable()">
+      
+      <div class="materi-table-wrapper">
+        <table class="materi-table">
+          <thead>
+            <tr>
+              <th>Hanzi</th>
+              <th>Pinyin</th>
+              <th>Arti</th>
+              <th style="width: 50px;">HSK</th>
+            </tr>
+          </thead>
+          <tbody id="materiTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="counter" class="counter">Total item filtered: 0</div>
@@ -455,6 +492,7 @@
       historyStack = [];
       historyIndex = -1;
       getNextCard();
+      renderMateriTable();
     }
 
     function filterHskLevel() {
@@ -464,18 +502,28 @@
 
     function switchMainView(view) {
       document.querySelectorAll('.btn-tab').forEach(btn => btn.classList.remove('active'));
+      
+      // Hide All Views
+      document.getElementById('view-flashcard').style.display = 'none';
+      document.getElementById('view-quiz').style.display = 'none';
+      document.getElementById('view-materi').style.display = 'none';
+
       if (view === 'flashcard') {
         document.getElementById('tab-flashcard').classList.add('active');
         document.getElementById('view-flashcard').style.display = 'block';
-        document.getElementById('view-quiz').style.display = 'none';
         document.getElementById('fc-controls').style.display = 'flex';
         document.getElementById('quiz-controls').style.display = 'none';
-      } else {
+      } else if (view === 'quiz') {
         document.getElementById('tab-quiz').classList.add('active');
-        document.getElementById('view-flashcard').style.display = 'none';
         document.getElementById('view-quiz').style.display = 'flex';
         document.getElementById('fc-controls').style.display = 'none';
         document.getElementById('quiz-controls').style.display = 'flex';
+      } else if (view === 'materi') {
+        document.getElementById('tab-materi').classList.add('active');
+        document.getElementById('view-materi').style.display = 'flex';
+        document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('quiz-controls').style.display = 'none';
+        renderMateriTable();
       }
     }
 
@@ -566,6 +614,36 @@
         subTextEl.className = 'sub-text hidden';
         artiEl.className = 'arti hidden';
       }
+    }
+
+    /* MATERI TABLE LOGIC */
+    function renderMateriTable() {
+      const tbody = document.getElementById('materiTableBody');
+      const searchQuery = (document.getElementById('materiSearchInput').value || '').toLowerCase().trim();
+      tbody.innerHTML = '';
+
+      const filtered = database.filter(item => {
+        const hanzi = (item.hanzi || '').toLowerCase();
+        const pinyin = (item.pinyin || '').toLowerCase();
+        const arti = (item.arti || '').toLowerCase();
+        return hanzi.includes(searchQuery) || pinyin.includes(searchQuery) || arti.includes(searchQuery);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">Materi tidak ditemukan.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:bold; font-size:16px;">${item.hanzi || ''}</td>
+          <td style="color:#2b6cb0;">${item.pinyin || ''}</td>
+          <td style="color:#2f855a;">${item.arti || ''}</td>
+          <td><span class="badge-hsk" style="position:static;">HSK ${item.hsk || '1'}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     /* QUIZ LOGIC */
