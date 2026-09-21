@@ -102,6 +102,15 @@
       position: absolute; top: 12px; right: 16px; background: #feebc8; color: #c05621;
       font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px;
     }
+    
+    /* Tombol Speaker Kartu */
+    .btn-speak-card {
+      position: absolute; top: 10px; left: 16px; background: #edf2f7; border: none;
+      border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s; color: #2b6cb0;
+    }
+    .btn-speak-card:hover { background: #e2e8f0; transform: scale(1.1); }
+
     .main-text { font-size: 34px; font-weight: bold; color: #1a202c; margin-bottom: 16px; word-break: break-word; }
     .divider { width: 40px; height: 3px; background: #e2e8f0; margin-bottom: 16px; border-radius: 2px; }
     .sub-text { font-size: 20px; color: #2b6cb0; margin-bottom: 8px; font-weight: 500; word-break: break-word; }
@@ -124,8 +133,15 @@
       background: white; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       text-align: center; display: none; flex-direction: column; gap: 16px;
     }
-    .quiz-q-box { background: #f7fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .quiz-q-box { background: #f7fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; position: relative; }
     .quiz-question { font-size: 28px; font-weight: bold; color: #2d3748; word-break: break-word; }
+    
+    .btn-speak-inline {
+      background: #edf2f7; border: none; border-radius: 6px; padding: 4px 8px;
+      font-size: 14px; cursor: pointer; margin-left: 8px; color: #2b6cb0; transition: 0.2s;
+    }
+    .btn-speak-inline:hover { background: #e2e8f0; }
+
     .quiz-options { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
     .btn-quiz-opt {
       padding: 14px; font-size: 16px; font-weight: 600; border: 2px solid #e2e8f0;
@@ -234,7 +250,7 @@
   <!-- Mode Tab Navigasi Utama -->
   <div class="mode-tab">
     <button class="btn-tab active" id="tab-flashcard" onclick="switchMainView('flashcard')">🎴 Flashcard</button>
-    <button class="btn-tab" id="tab-quiz" onclick="switchMainView('quiz')">📝 Quiz Pilihan Ganda</button>
+    <button class="btn-tab" id="tab-quiz" onclick="switchMainView('quiz')">📝 Kuis Pilihan Ganda</button>
     <button class="btn-tab time-attack-tab" id="tab-timeattack" onclick="switchMainView('timeattack')">⚡ Time Attack</button>
     <button class="btn-tab" id="tab-materi" onclick="switchMainView('materi')">📚 Isi Materi</button>
   </div>
@@ -258,6 +274,17 @@
           <option value="6">HSK 6</option>
         </select>
       </div>
+    </div>
+
+    <!-- Controls Suara & Pelafalan -->
+    <div class="control-group">
+      <label>Kecepatan Suara (Speak Rate):</label>
+      <select id="speechRate" class="select-hsk">
+        <option value="0.5">0.5x (Lambat)</option>
+        <option value="0.8">0.8x (Sedang)</option>
+        <option value="1.0" selected>1.0x (Normal)</option>
+        <option value="1.2">1.2x (Cepat)</option>
+      </select>
     </div>
 
     <!-- Opsi Khusus Flashcard -->
@@ -311,6 +338,7 @@
     <div id="view-flashcard">
       <div class="card-container">
         <div class="card" onclick="toggleAnswer()">
+          <button class="btn-speak-card" title="Dengarkan Suara" onclick="speakCurrentCard(event)">🔊</button>
           <span id="card-hsk-badge" class="badge-hsk">HSK 1</span>
           <div id="main-text" class="main-text">Memuat data...</div>
           <div class="divider"></div>
@@ -323,7 +351,7 @@
         <button class="btn-nav btn-prev" onclick="getPrevCard()">⬅️ Sebelumnya</button>
         <button class="btn-nav btn-next" onclick="getNextCard()">Berikutnya ➔</button>
       </div>
-      <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban</p>
+      <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban | Klik 🔊 untuk pelafalan</p>
     </div>
 
     <!-- VIEW 2: QUIZ -->
@@ -345,7 +373,10 @@
         </div>
 
         <div class="quiz-q-box" style="margin-top: 12px;">
-          <div id="quiz-q-text" class="quiz-question">--</div>
+          <div style="display:flex; align-items:center; justify-content:center;">
+            <div id="quiz-q-text" class="quiz-question">--</div>
+            <button class="btn-speak-inline" id="btnSpeakQuiz" title="Dengarkan Suara">🔊</button>
+          </div>
         </div>
 
         <div class="quiz-options" id="quiz-options"></div>
@@ -399,7 +430,10 @@
         </div>
 
         <div class="quiz-q-box" style="margin-top: 12px; border-color: #feebc8;">
-          <div id="ta-q-text" class="quiz-question">--</div>
+          <div style="display:flex; align-items:center; justify-content:center;">
+            <div id="ta-q-text" class="quiz-question">--</div>
+            <button class="btn-speak-inline" id="btnSpeakTa" title="Dengarkan Suara">🔊</button>
+          </div>
         </div>
 
         <div class="quiz-options" id="ta-options"></div>
@@ -451,6 +485,7 @@
               <th>Hanzi</th>
               <th>Pinyin</th>
               <th>Arti</th>
+              <th style="width: 40px;">Suara</th>
               <th style="width: 50px;">HSK</th>
             </tr>
           </thead>
@@ -539,6 +574,32 @@
     let taCurrentItem = null;
     let taCorrectHistory = [];
     let taAnswered = false;
+
+    /* TEXT TO SPEECH (SUARA MANDARIN) */
+    function speakMandarin(text) {
+      if (!('speechSynthesis' in window)) {
+        alert("Browser kamu belum mendukung fitur Text-to-Speech!");
+        return;
+      }
+
+      window.speechSynthesis.cancel(); // Stop suara sebelumnya jika ada
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-CN'; // Bahasa Mandarin Cina
+
+      // Dapatkan Kecepatan Suara
+      const rateVal = parseFloat(document.getElementById('speechRate').value) || 1.0;
+      utterance.rate = rateVal;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakCurrentCard(event) {
+      if (event) event.stopPropagation(); // Biar kartu tidak berbalik saat klik speaker
+      if (historyIndex >= 0 && database[historyStack[historyIndex]]) {
+        const item = database[historyStack[historyIndex]];
+        speakMandarin(item.hanzi);
+      }
+    }
 
     function submitName() {
       const input = document.getElementById('userNameInput').value.trim();
@@ -725,7 +786,7 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">Materi tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#a0aec0; padding:20px;">Materi tidak ditemukan.</td></tr>`;
         return;
       }
 
@@ -735,6 +796,7 @@
           <td style="font-weight:bold; font-size:16px;">${item.hanzi || ''}</td>
           <td style="color:#2b6cb0;">${item.pinyin || ''}</td>
           <td style="color:#2f855a;">${item.arti || ''}</td>
+          <td><button class="btn-speak-inline" onclick="speakMandarin('${escapeHtml(item.hanzi)}')">🔊</button></td>
           <td><span class="badge-hsk" style="position:static;">HSK ${item.hsk || '1'}</span></td>
         `;
         tbody.appendChild(tr);
@@ -783,6 +845,9 @@
 
       document.getElementById('quiz-progress').innerText = `Soal ${quizCurrentIdx + 1} / ${quizQuestions.length}`;
       document.getElementById('quiz-q-text').innerText = item[qType];
+
+      // Setup Tombol Suara Soal Kuis
+      document.getElementById('btnSpeakQuiz').onclick = () => speakMandarin(item.hanzi);
 
       let options = [item[aType]];
       let others = database.filter(d => d[aType] !== item[aType]);
@@ -929,7 +994,6 @@
       taCorrectHistory = [];
       taStartTime = Date.now();
 
-      // Set durasi time limit dari input user (dalam detik -> milidetik)
       const reqSec = parseInt(document.getElementById('ta-timer-sec').value) || 10;
       taTimeLimitMs = reqSec * 1000;
 
@@ -952,6 +1016,9 @@
 
       document.getElementById('ta-streak-text').innerText = `🔥 Streak: ${taStreak} Soal`;
       document.getElementById('ta-q-text').innerText = taCurrentItem[qType];
+
+      // Setup Tombol Suara Time Attack
+      document.getElementById('btnSpeakTa').onclick = () => speakMandarin(taCurrentItem.hanzi);
 
       let options = [taCurrentItem[aType]];
       let others = database.filter(d => d[aType] !== taCurrentItem[aType]);
