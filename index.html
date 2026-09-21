@@ -90,7 +90,7 @@
 
     /* Flashcard UI */
     .main-box { width: 100%; max-width: 520px; }
-    .card-container { perspective: 1000px; margin-bottom: 16px; }
+    .card-container { perspective: 1000px; margin-bottom: 12px; }
     .card {
       background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -103,7 +103,11 @@
       font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px;
     }
     
-    /* Tombol Speaker Kartu */
+    .badge-hafal {
+      position: absolute; top: 12px; left: 58px; background: #c6f6d5; color: #22543d;
+      font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px; display: none;
+    }
+
     .btn-speak-card {
       position: absolute; top: 10px; left: 16px; background: #edf2f7; border: none;
       border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer;
@@ -117,6 +121,20 @@
     .arti { font-size: 18px; color: #2f855a; font-weight: 600; word-break: break-word; }
     .hidden { visibility: hidden; opacity: 0; }
     .visible { visibility: visible; opacity: 1; }
+
+    /* Flashcard Action Buttons */
+    .fc-action-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .btn-hafal {
+      flex: 1; padding: 10px; font-size: 13px; font-weight: bold; border: none;
+      background-color: #38a169; color: white; border-radius: 8px; cursor: pointer; transition: 0.2s;
+      box-shadow: 0 2px 6px rgba(56, 161, 105, 0.3);
+    }
+    .btn-hafal:hover { background-color: #2f855a; }
+    .btn-unhafal {
+      flex: 1; padding: 10px; font-size: 13px; font-weight: bold; border: none;
+      background-color: #dd6b20; color: white; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-unhafal:hover { background-color: #c05621; }
 
     .nav-buttons { display: flex; gap: 10px; width: 100%; }
     .btn-nav {
@@ -179,6 +197,7 @@
       background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       display: none; flex-direction: column; gap: 12px;
     }
+    .materi-filter-bar { display: flex; gap: 6px; justify-content: center; }
     .materi-search {
       width: 100%; padding: 10px 14px; font-size: 13px; border: 1px solid #cbd5e0;
       border-radius: 8px; outline: none;
@@ -190,8 +209,14 @@
     .materi-table th { background: #f7fafc; color: #4a5568; position: sticky; top: 0; z-index: 10; }
     .materi-table tr:hover { background: #f8fafc; }
 
+    .btn-sm-action {
+      padding: 4px 8px; font-size: 11px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;
+    }
+    .btn-sm-hafal { background: #c6f6d5; color: #22543d; }
+    .btn-sm-unhafal { background: #feebc8; color: #c05621; }
+
     .hint { color: #718096; font-size: 13px; margin-top: 12px; text-align: center; }
-    .counter { margin-top: 10px; font-size: 12px; color: #a0aec0; text-align: center; }
+    .counter { margin-top: 10px; font-size: 13px; font-weight: 600; color: #4a5568; text-align: center; }
 
     /* Footer */
     footer {
@@ -243,7 +268,7 @@
 
   <!-- User Info Bar -->
   <div class="user-bar">
-    <span>👤 Siswa: <strong id="currentUserDisplay">--</strong></span>
+    <span>👤 学生 Xuéshēng: <strong id="currentUserDisplay">--</strong></span>
     <button class="btn-change-user" onclick="resetUserSession()">Ganti Nama</button>
   </div>
 
@@ -300,6 +325,14 @@
     <!-- Opsi Khusus Kuis & Time Attack -->
     <div id="quiz-controls" style="display: none; flex-direction: column; gap: 10px;">
       <div class="control-group">
+        <label>Sumber Soal Kuis:</label>
+        <select id="quiz-hafal-filter" class="select-hsk" style="width: 100%;">
+          <option value="unhafal" selected>Belum Hafal Saja</option>
+          <option value="hafal">Yang Sudah Hafal</option>
+          <option value="all">Semua Kata (Campuran)</option>
+        </select>
+      </div>
+      <div class="control-group">
         <label>Soal ➔ Jawaban:</label>
         <div style="display: flex; gap: 4px; align-items: center;">
           <select id="quiz-q-type" class="select-hsk">
@@ -339,6 +372,7 @@
       <div class="card-container">
         <div class="card" onclick="toggleAnswer()">
           <button class="btn-speak-card" title="Dengarkan Suara" onclick="speakCurrentCard(event)">🔊</button>
+          <span id="card-hafal-badge" class="badge-hafal">✓ Sudah Hafal</span>
           <span id="card-hsk-badge" class="badge-hsk">HSK 1</span>
           <div id="main-text" class="main-text">Memuat data...</div>
           <div class="divider"></div>
@@ -347,11 +381,17 @@
         </div>
       </div>
 
+      <!-- Action Bar Hafal -->
+      <div class="fc-action-bar">
+        <button class="btn-hafal" id="btnMarkHafal" onclick="markCurrentAsHafal()">✅ Tanda "Sudah Hafal"</button>
+        <button class="btn-unhafal" id="btnUnmarkHafal" style="display:none;" onclick="unmarkCurrentAsHafal()">🔄 Kembalikan ke Belajar</button>
+      </div>
+
       <div class="nav-buttons">
         <button class="btn-nav btn-prev" onclick="getPrevCard()">⬅️ Sebelumnya</button>
         <button class="btn-nav btn-next" onclick="getNextCard()">Berikutnya ➔</button>
       </div>
-      <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban | Klik 🔊 untuk pelafalan</p>
+      <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban</p>
     </div>
 
     <!-- VIEW 2: QUIZ -->
@@ -476,6 +516,14 @@
 
     <!-- VIEW 4: ISI MATERI -->
     <div id="view-materi" class="materi-container">
+      <div class="materi-filter-bar">
+        <div class="btn-group" style="width: 100%;">
+          <button class="btn-option active" id="mat-filter-all" onclick="setMateriStatusFilter('all')">Semua Materi</button>
+          <button class="btn-option" id="mat-filter-unhafal" onclick="setMateriStatusFilter('unhafal')">Belum Hafal</button>
+          <button class="btn-option" id="mat-filter-hafal" onclick="setMateriStatusFilter('hafal')">Sudah Hafal</button>
+        </div>
+      </div>
+
       <input type="text" id="materiSearchInput" class="materi-search" placeholder="🔍 Cari Hanzi, Pinyin, atau Arti..." oninput="renderMateriTable()">
       
       <div class="materi-table-wrapper">
@@ -486,7 +534,7 @@
               <th>Pinyin</th>
               <th>Arti</th>
               <th style="width: 40px;">Suara</th>
-              <th style="width: 50px;">HSK</th>
+              <th style="width: 70px;">Status</th>
             </tr>
           </thead>
           <tbody id="materiTableBody"></tbody>
@@ -495,7 +543,7 @@
     </div>
   </div>
 
-  <div id="counter" class="counter">Total item filtered: 0</div>
+  <div id="counter" class="counter">Total item filtered: 0 | Total item Hafal: 0</div>
 
   <!-- Footer -->
   <footer>
@@ -550,6 +598,10 @@
     let selectedHsk = 'all';
     let currentUser = '';
     let showAnswer = false;
+    let materiStatusFilter = 'all';
+
+    // LOCAL HAFAL TRACKING (localStorage)
+    let hafalSet = new Set();
 
     // Flashcard History Tracking
     let historyStack = [];
@@ -575,26 +627,81 @@
     let taCorrectHistory = [];
     let taAnswered = false;
 
-    /* TEXT TO SPEECH (SUARA MANDARIN) */
+    /* LOCAL HAFAL SYSTEM */
+    function loadHafalData() {
+      const saved = localStorage.getItem(`hafal_${currentUser}_${currentDbFile}`);
+      if (saved) {
+        hafalSet = new Set(JSON.parse(saved));
+      } else {
+        hafalSet = new Set();
+      }
+    }
+
+    function saveHafalData() {
+      localStorage.setItem(`hafal_${currentUser}_${currentDbFile}`, JSON.stringify(Array.from(hafalSet)));
+      updateCounterDisplay();
+    }
+
+    function getItemId(item) {
+      return (item.hanzi || '').trim();
+    }
+
+    function markCurrentAsHafal() {
+      if (historyIndex >= 0 && database[historyStack[historyIndex]]) {
+        const item = database[historyStack[historyIndex]];
+        hafalSet.add(getItemId(item));
+        saveHafalData();
+        renderCard();
+        renderMateriTable();
+      }
+    }
+
+    function unmarkCurrentAsHafal() {
+      if (historyIndex >= 0 && database[historyStack[historyIndex]]) {
+        const item = database[historyStack[historyIndex]];
+        hafalSet.delete(getItemId(item));
+        saveHafalData();
+        renderCard();
+        renderMateriTable();
+      }
+    }
+
+    function toggleHafalByHanzi(hanzi) {
+      if (hafalSet.has(hanzi)) {
+        hafalSet.delete(hanzi);
+      } else {
+        hafalSet.add(hanzi);
+      }
+      saveHafalData();
+      renderCard();
+      renderMateriTable();
+    }
+
+    function updateCounterDisplay() {
+      let hafalCountInFilter = 0;
+      database.forEach(item => {
+        if (hafalSet.has(getItemId(item))) {
+          hafalCountInFilter++;
+        }
+      });
+      document.getElementById('counter').innerText = `Total item filtered: ${database.length} | Total item Hafal: ${hafalCountInFilter}`;
+    }
+
+    /* TEXT TO SPEECH */
     function speakMandarin(text) {
       if (!('speechSynthesis' in window)) {
         alert("Browser kamu belum mendukung fitur Text-to-Speech!");
         return;
       }
-
-      window.speechSynthesis.cancel(); // Stop suara sebelumnya jika ada
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN'; // Bahasa Mandarin Cina
-
-      // Dapatkan Kecepatan Suara
-      const rateVal = parseFloat(document.getElementById('speechRate').value) || 1.0;
-      utterance.rate = rateVal;
-
+      utterance.lang = 'zh-CN';
+      utterance.rate = parseFloat(document.getElementById('speechRate').value) || 1.0;
       window.speechSynthesis.speak(utterance);
     }
 
     function speakCurrentCard(event) {
-      if (event) event.stopPropagation(); // Biar kartu tidak berbalik saat klik speaker
+      if (event) event.stopPropagation();
       if (historyIndex >= 0 && database[historyStack[historyIndex]]) {
         const item = database[historyStack[historyIndex]];
         speakMandarin(item.hanzi);
@@ -610,6 +717,7 @@
       currentUser = input;
       document.getElementById('currentUserDisplay').innerText = currentUser;
       document.getElementById('welcomeOverlay').style.display = 'none';
+      loadHafalData();
       loadDatabase();
     }
 
@@ -622,6 +730,7 @@
       try {
         const response = await fetch(currentDbFile);
         rawDatabase = await response.json();
+        loadHafalData();
         applyHskFilter();
       } catch (error) {
         document.getElementById('main-text').innerText = "Gagal membaca database!";
@@ -635,7 +744,7 @@
         database = rawDatabase.filter(item => String(item.hsk || '1').trim() === selectedHsk);
       }
 
-      document.getElementById('counter').innerText = `Total item filtered: ${database.length}`;
+      updateCounterDisplay();
       historyStack = [];
       historyIndex = -1;
       getNextCard();
@@ -735,7 +844,21 @@
       if (historyIndex < 0 || !database[historyStack[historyIndex]]) return;
 
       const item = database[historyStack[historyIndex]];
+      const isHafal = hafalSet.has(getItemId(item));
+
       document.getElementById('card-hsk-badge').innerText = `HSK ${item.hsk || '1'}`;
+      document.getElementById('card-hafal-badge').style.display = isHafal ? 'block' : 'none';
+
+      const btnMark = document.getElementById('btnMarkHafal');
+      const btnUnmark = document.getElementById('btnUnmarkHafal');
+
+      if (isHafal) {
+        btnMark.style.display = 'none';
+        btnUnmark.style.display = 'block';
+      } else {
+        btnMark.style.display = 'block';
+        btnUnmark.style.display = 'none';
+      }
 
       const mainTextEl = document.getElementById('main-text');
       const subTextEl = document.getElementById('sub-text');
@@ -773,12 +896,26 @@
     }
 
     /* MATERI TABLE LOGIC */
+    function setMateriStatusFilter(status) {
+      materiStatusFilter = status;
+      document.querySelectorAll('#mat-filter-all, #mat-filter-unhafal, #mat-filter-hafal').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`mat-filter-${status}`).classList.add('active');
+      renderMateriTable();
+    }
+
     function renderMateriTable() {
       const tbody = document.getElementById('materiTableBody');
       const searchQuery = (document.getElementById('materiSearchInput').value || '').toLowerCase().trim();
       tbody.innerHTML = '';
 
-      const filtered = database.filter(item => {
+      let filtered = database.filter(item => {
+        const isHafal = hafalSet.has(getItemId(item));
+        if (materiStatusFilter === 'hafal') return isHafal;
+        if (materiStatusFilter === 'unhafal') return !isHafal;
+        return true;
+      });
+
+      filtered = filtered.filter(item => {
         const hanzi = (item.hanzi || '').toLowerCase();
         const pinyin = (item.pinyin || '').toLowerCase();
         const arti = (item.arti || '').toLowerCase();
@@ -791,22 +928,46 @@
       }
 
       filtered.forEach(item => {
+        const id = getItemId(item);
+        const isHafal = hafalSet.has(id);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td style="font-weight:bold; font-size:16px;">${item.hanzi || ''}</td>
           <td style="color:#2b6cb0;">${item.pinyin || ''}</td>
           <td style="color:#2f855a;">${item.arti || ''}</td>
           <td><button class="btn-speak-inline" onclick="speakMandarin('${escapeHtml(item.hanzi)}')">🔊</button></td>
-          <td><span class="badge-hsk" style="position:static;">HSK ${item.hsk || '1'}</span></td>
+          <td>
+            <button class="btn-sm-action ${isHafal ? 'btn-sm-hafal' : 'btn-sm-unhafal'}" onclick="toggleHafalByHanzi('${escapeHtml(id)}')">
+              ${isHafal ? '✓ Hafal' : '+ Belum'}
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     /* NORMAL QUIZ LOGIC */
+    function getQuizAvailableDatabase() {
+      const mode = document.getElementById('quiz-hafal-filter').value;
+      let pool = [];
+
+      if (mode === 'unhafal') {
+        pool = database.filter(item => !hafalSet.has(getItemId(item)));
+      } else if (mode === 'hafal') {
+        pool = database.filter(item => hafalSet.has(getItemId(item)));
+      } else {
+        pool = [...database];
+      }
+
+      return pool;
+    }
+
     function startQuiz() {
-      if (database.length < 3) {
-        alert("Database pada HSK ini minimal harus berisi 3 item untuk kuis!");
+      const activeQuizDb = getQuizAvailableDatabase();
+      const hafalModeText = document.getElementById('quiz-hafal-filter').options[document.getElementById('quiz-hafal-filter').selectedIndex].text;
+
+      if (activeQuizDb.length < 3) {
+        alert(`Daftar kata untuk mode "${hafalModeText}" minimal harus berisi 3 item! Silakan pilih filter lain atau tandai lebih banyak kata.`);
         return;
       }
 
@@ -819,9 +980,9 @@
       }
 
       const reqCount = parseInt(document.getElementById('quiz-count').value) || 5;
-      const count = Math.min(reqCount, database.length);
+      const count = Math.min(reqCount, activeQuizDb.length);
 
-      let shuffled = [...database].sort(() => 0.5 - Math.random());
+      let shuffled = [...activeQuizDb].sort(() => 0.5 - Math.random());
       quizQuestions = shuffled.slice(0, count);
 
       quizCurrentIdx = 0;
@@ -846,7 +1007,6 @@
       document.getElementById('quiz-progress').innerText = `Soal ${quizCurrentIdx + 1} / ${quizQuestions.length}`;
       document.getElementById('quiz-q-text').innerText = item[qType];
 
-      // Setup Tombol Suara Soal Kuis
       document.getElementById('btnSpeakQuiz').onclick = () => speakMandarin(item.hanzi);
 
       let options = [item[aType]];
@@ -977,8 +1137,11 @@
 
     /* TIME ATTACK QUIZ LOGIC */
     function startTimeAttack() {
-      if (database.length < 3) {
-        alert("Database pada HSK ini minimal harus berisi 3 item untuk Time Attack!");
+      const activeQuizDb = getQuizAvailableDatabase();
+      const hafalModeText = document.getElementById('quiz-hafal-filter').options[document.getElementById('quiz-hafal-filter').selectedIndex].text;
+
+      if (activeQuizDb.length < 3) {
+        alert(`Daftar kata untuk mode "${hafalModeText}" minimal harus berisi 3 item! Silakan pilih filter lain atau tandai lebih banyak kata.`);
         return;
       }
 
@@ -1008,16 +1171,16 @@
       taAnswered = false;
       clearInterval(taTimerInterval);
 
+      const activeQuizDb = getQuizAvailableDatabase();
       const qType = document.getElementById('quiz-q-type').value;
       const aType = document.getElementById('quiz-a-type').value;
 
-      const randomIndex = Math.floor(Math.random() * database.length);
-      taCurrentItem = database[randomIndex];
+      const randomIndex = Math.floor(Math.random() * activeQuizDb.length);
+      taCurrentItem = activeQuizDb[randomIndex];
 
       document.getElementById('ta-streak-text').innerText = `🔥 Streak: ${taStreak} Soal`;
       document.getElementById('ta-q-text').innerText = taCurrentItem[qType];
 
-      // Setup Tombol Suara Time Attack
       document.getElementById('btnSpeakTa').onclick = () => speakMandarin(taCurrentItem.hanzi);
 
       let options = [taCurrentItem[aType]];
