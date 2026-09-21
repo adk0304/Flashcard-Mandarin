@@ -56,11 +56,12 @@
       width: 100%; max-width: 520px; justify-content: center; flex-wrap: wrap;
     }
     .btn-tab {
-      flex: 1; min-width: 110px; padding: 8px 8px; border: none; font-weight: bold; background: transparent; color: #4a5568;
-      border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 12px; text-align: center;
+      flex: 1; min-width: 90px; padding: 8px 6px; border: none; font-weight: bold; background: transparent; color: #4a5568;
+      border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 11px; text-align: center;
     }
     .btn-tab.active { background: #3182ce; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
     .btn-tab.time-attack-tab.active { background: #dd6b20; }
+    .btn-tab.auto-learn-tab.active { background: #805ad5; }
 
     /* Control Panel */
     .controls {
@@ -145,6 +146,25 @@
     .btn-prev:hover { background-color: #4a5568; }
     .btn-next { background-color: #3182ce; }
     .btn-next:hover { background-color: #2b6cb0; }
+
+    /* Auto Learning UI */
+    .auto-controls-box {
+      background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; gap: 14px; text-align: center;
+    }
+    .auto-play-bar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .btn-auto-play {
+      flex: 1; min-width: 90px; padding: 10px 12px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px;
+      color: white; cursor: pointer; transition: 0.2s;
+    }
+    .btn-auto-start { background: #805ad5; }
+    .btn-auto-start:hover { background: #6b46c1; }
+    .btn-auto-pause { background: #dd6b20; }
+    .btn-auto-pause:hover { background: #c05621; }
+    .btn-auto-resume { background: #3182ce; }
+    .btn-auto-resume:hover { background: #2b6cb0; }
+    .btn-auto-stop { background: #e53e3e; }
+    .btn-auto-stop:hover { background: #c53030; }
 
     /* Quiz Mode UI */
     .quiz-container {
@@ -275,6 +295,7 @@
   <!-- Mode Tab Navigasi Utama -->
   <div class="mode-tab">
     <button class="btn-tab active" id="tab-flashcard" onclick="switchMainView('flashcard')">🎴 Flashcard</button>
+    <button class="btn-tab auto-learn-tab" id="tab-autolearn" onclick="switchMainView('autolearn')">🎧 Auto Learning</button>
     <button class="btn-tab" id="tab-quiz" onclick="switchMainView('quiz')">📝 Kuis Pilihan Ganda</button>
     <button class="btn-tab time-attack-tab" id="tab-timeattack" onclick="switchMainView('timeattack')">⚡ Time Attack</button>
     <button class="btn-tab" id="tab-materi" onclick="switchMainView('materi')">📚 Isi Materi</button>
@@ -301,14 +322,24 @@
       </div>
     </div>
 
-    <!-- Controls Suara & Pelafalan -->
+    <!-- Controls Kecepatan Suara Terpisah -->
     <div class="control-group">
-      <label>Kecepatan Suara (Speak Rate):</label>
-      <select id="speechRate" class="select-hsk">
+      <label>Kecepatan Suara Mandarin:</label>
+      <select id="speechRateMandarin" class="select-hsk">
         <option value="0.5">0.5x (Lambat)</option>
+        <option value="0.8" selected>0.8x (Sedang)</option>
+        <option value="1.0">1.0x (Normal)</option>
+        <option value="1.2">1.2x (Cepat)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Kecepatan Suara Indonesia:</label>
+      <select id="speechRateIndo" class="select-hsk">
         <option value="0.8">0.8x (Sedang)</option>
         <option value="1.0" selected>1.0x (Normal)</option>
         <option value="1.2">1.2x (Cepat)</option>
+        <option value="1.5">1.5x (Sangat Cepat)</option>
       </select>
     </div>
 
@@ -319,6 +350,34 @@
         <button class="btn-option active" id="mode-hanzi" onclick="setMode('hanzi', 'mode-hanzi')">Hanzi</button>
         <button class="btn-option" id="mode-pinyin" onclick="setMode('pinyin', 'mode-pinyin')">Pinyin</button>
         <button class="btn-option" id="mode-arti" onclick="setMode('arti', 'mode-arti')">Arti</button>
+      </div>
+    </div>
+
+    <!-- Opsi Khusus Auto Learning -->
+    <div id="auto-learn-controls" style="display: none; flex-direction: column; gap: 10px;">
+      <div class="control-group">
+        <label>Sumber Kata:</label>
+        <select id="auto-hafal-filter" class="select-hsk" style="width: 100%;">
+          <option value="unhafal" selected>Belum Hafal Saja</option>
+          <option value="hafal">Yang Sudah Hafal</option>
+          <option value="all">Semua Kata (Campuran)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Urutan Pemutaran:</label>
+        <select id="autoOrder" class="select-hsk">
+          <option value="random" selected>🎲 Acak (Random)</option>
+          <option value="sequential">🔢 Berurutan (Sequential)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Jeda Antar Kartu:</label>
+        <select id="autoDelaySec" class="select-hsk">
+          <option value="0.5">0.5 Detik</option>
+          <option value="1.0" selected>1.0 Detik</option>
+          <option value="2.0">2.0 Detik</option>
+          <option value="3.0">3.0 Detik</option>
+        </select>
       </div>
     </div>
 
@@ -394,7 +453,30 @@
       <p class="hint">💡 Klik kartu untuk melihat/menyembunyikan Jawaban</p>
     </div>
 
-    <!-- VIEW 2: QUIZ -->
+    <!-- VIEW 2: AUTO LEARNING -->
+    <div id="view-autolearn" style="display: none;">
+      <div class="card-container">
+        <div class="card" style="cursor: default;">
+          <span id="auto-card-hsk-badge" class="badge-hsk">HSK 1</span>
+          <div id="auto-main-text" class="main-text">Tekan Mulai untuk Belajar 🎧</div>
+          <div class="divider"></div>
+          <div id="auto-sub-text" class="sub-text visible">--</div>
+          <div id="auto-arti" class="arti visible" style="color: #2f855a;">--</div>
+        </div>
+      </div>
+
+      <div class="auto-controls-box">
+        <div style="font-size: 13px; font-weight: bold; color: #4a5568;" id="auto-progress-text">Progres: 0 / 0</div>
+        <div class="auto-play-bar">
+          <button class="btn-auto-play btn-auto-start" id="btnAutoStart" onclick="startAutoLearning()">▶️ Mulai Putar</button>
+          <button class="btn-auto-play btn-auto-pause" id="btnAutoPause" style="display: none;" onclick="pauseAutoLearning()">⏸️ Pause</button>
+          <button class="btn-auto-play btn-auto-resume" id="btnAutoResume" style="display: none;" onclick="resumeAutoLearning()">▶️ Lanjutkan</button>
+          <button class="btn-auto-play btn-auto-stop" id="btnAutoStop" style="display: none;" onclick="stopAutoLearning()">⏹️ Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: QUIZ -->
     <div id="view-quiz" class="quiz-container">
       <div id="quiz-start-screen">
         <h3>Pilihan Ganda Ready</h3>
@@ -447,7 +529,7 @@
       </div>
     </div>
 
-    <!-- VIEW 3: TIME ATTACK QUIZ -->
+    <!-- VIEW 4: TIME ATTACK QUIZ -->
     <div id="view-timeattack" class="quiz-container">
       <div id="ta-start-screen">
         <h3 style="color: #dd6b20;">⚡ Quiz Time Attack</h3>
@@ -514,7 +596,7 @@
       </div>
     </div>
 
-    <!-- VIEW 4: ISI MATERI -->
+    <!-- VIEW 5: ISI MATERI -->
     <div id="view-materi" class="materi-container">
       <div class="materi-filter-bar">
         <div class="btn-group" style="width: 100%;">
@@ -607,6 +689,14 @@
     let historyStack = [];
     let historyIndex = -1;
 
+    // Auto Learning Tracking
+    let autoQueue = [];
+    let autoCurrentIdx = 0;
+    let isAutoPlaying = false;
+    let isAutoPaused = false;
+    let autoStepPhase = 'idle'; // 'mandarin', 'indo', 'delay'
+    let autoTimeoutId = null;
+
     // Quiz Normal Tracking
     let quizQuestions = [];
     let quizCurrentIdx = 0;
@@ -687,17 +777,41 @@
       document.getElementById('counter').innerText = `Total item filtered: ${database.length} | Total item Hafal: ${hafalCountInFilter}`;
     }
 
-    /* TEXT TO SPEECH */
-    function speakMandarin(text) {
+    /* TEXT TO SPEECH TERPISAH (MANDARIN VS INDONESIA) */
+    function speakTextWithCallback(text, lang, rateVal, onEndCallback) {
       if (!('speechSynthesis' in window)) {
-        alert("Browser kamu belum mendukung fitur Text-to-Speech!");
+        if (onEndCallback) onEndCallback();
         return;
       }
+
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = parseFloat(document.getElementById('speechRate').value) || 1.0;
+      utterance.lang = lang;
+      utterance.rate = rateVal;
+
+      utterance.onend = function() {
+        if (onEndCallback && isAutoPlaying && !isAutoPaused) {
+          onEndCallback();
+        }
+      };
+
+      utterance.onerror = function() {
+        if (onEndCallback && isAutoPlaying && !isAutoPaused) {
+          onEndCallback();
+        }
+      };
+
       window.speechSynthesis.speak(utterance);
+    }
+
+    function speakMandarin(text) {
+      const rate = parseFloat(document.getElementById('speechRateMandarin').value) || 0.8;
+      speakTextWithCallback(text, 'zh-CN', rate, null);
+    }
+
+    function speakIndo(text) {
+      const rate = parseFloat(document.getElementById('speechRateIndo').value) || 1.0;
+      speakTextWithCallback(text, 'id-ID', rate, null);
     }
 
     function speakCurrentCard(event) {
@@ -706,6 +820,146 @@
         const item = database[historyStack[historyIndex]];
         speakMandarin(item.hanzi);
       }
+    }
+
+    /* AUTO LEARNING LOGIC */
+    function getAutoAvailableDatabase() {
+      const mode = document.getElementById('auto-hafal-filter').value;
+      let pool = [];
+
+      if (mode === 'unhafal') {
+        pool = database.filter(item => !hafalSet.has(getItemId(item)));
+      } else if (mode === 'hafal') {
+        pool = database.filter(item => hafalSet.has(getItemId(item)));
+      } else {
+        pool = [...database];
+      }
+
+      return pool;
+    }
+
+    function startAutoLearning() {
+      const activeAutoDb = getAutoAvailableDatabase();
+      const hafalModeText = document.getElementById('auto-hafal-filter').options[document.getElementById('auto-hafal-filter').selectedIndex].text;
+
+      if (activeAutoDb.length === 0) {
+        alert(`Daftar kata untuk mode "${hafalModeText}" kosong! Silakan pilih filter lain.`);
+        return;
+      }
+
+      const order = document.getElementById('autoOrder').value;
+      if (order === 'random') {
+        autoQueue = [...activeAutoDb].sort(() => 0.5 - Math.random());
+      } else {
+        autoQueue = [...activeAutoDb];
+      }
+
+      autoCurrentIdx = 0;
+      isAutoPlaying = true;
+      isAutoPaused = false;
+
+      updateAutoPlayButtons('playing');
+      playNextAutoStep();
+    }
+
+    function pauseAutoLearning() {
+      if (!isAutoPlaying) return;
+      isAutoPaused = true;
+      window.speechSynthesis.cancel();
+      clearTimeout(autoTimeoutId);
+
+      updateAutoPlayButtons('paused');
+      document.getElementById('auto-main-text').innerText = autoQueue[autoCurrentIdx] ? autoQueue[autoCurrentIdx].hanzi + " (Paused ⏸️)" : "Paused ⏸️";
+    }
+
+    function resumeAutoLearning() {
+      if (!isAutoPlaying || !isAutoPaused) return;
+      isAutoPaused = false;
+
+      updateAutoPlayButtons('playing');
+      playNextAutoStep();
+    }
+
+    function stopAutoLearning() {
+      isAutoPlaying = false;
+      isAutoPaused = false;
+      window.speechSynthesis.cancel();
+      clearTimeout(autoTimeoutId);
+
+      updateAutoPlayButtons('stopped');
+
+      document.getElementById('auto-main-text').innerText = "Pemutaran Diberhentikan ⏹️";
+      document.getElementById('auto-sub-text').innerText = "--";
+      document.getElementById('auto-arti').innerText = "--";
+      document.getElementById('auto-progress-text').innerText = `Progres: 0 / ${autoQueue.length}`;
+    }
+
+    function updateAutoPlayButtons(state) {
+      const btnStart = document.getElementById('btnAutoStart');
+      const btnPause = document.getElementById('btnAutoPause');
+      const btnResume = document.getElementById('btnAutoResume');
+      const btnStop = document.getElementById('btnAutoStop');
+
+      if (state === 'playing') {
+        btnStart.style.display = 'none';
+        btnPause.style.display = 'block';
+        btnResume.style.display = 'none';
+        btnStop.style.display = 'block';
+      } else if (state === 'paused') {
+        btnStart.style.display = 'none';
+        btnPause.style.display = 'none';
+        btnResume.style.display = 'block';
+        btnStop.style.display = 'block';
+      } else { // stopped
+        btnStart.style.display = 'block';
+        btnPause.style.display = 'none';
+        btnResume.style.display = 'none';
+        btnStop.style.display = 'none';
+      }
+    }
+
+    function playNextAutoStep() {
+      if (!isAutoPlaying || isAutoPaused) return;
+
+      if (autoCurrentIdx >= autoQueue.length) {
+        document.getElementById('auto-main-text').innerText = "🎉 Selesai Semua Sesi!";
+        document.getElementById('auto-sub-text').innerText = "--";
+        document.getElementById('auto-arti').innerText = "--";
+        stopAutoLearning();
+        return;
+      }
+
+      const item = autoQueue[autoCurrentIdx];
+      document.getElementById('auto-card-hsk-badge').innerText = `HSK ${item.hsk || '1'}`;
+      document.getElementById('auto-main-text').innerText = item.hanzi;
+      document.getElementById('auto-sub-text').innerText = item.pinyin;
+      document.getElementById('auto-arti').innerText = item.arti;
+
+      document.getElementById('auto-progress-text').innerText = `Progres: ${autoCurrentIdx + 1} / ${autoQueue.length}`;
+
+      const rateMandarin = parseFloat(document.getElementById('speechRateMandarin').value) || 0.8;
+      const rateIndo = parseFloat(document.getElementById('speechRateIndo').value) || 1.0;
+      const delayMs = (parseFloat(document.getElementById('autoDelaySec').value) || 1.0) * 1000;
+
+      // STEP 1: Speak Hanzi (Mandarin)
+      speakTextWithCallback(item.hanzi, 'zh-CN', rateMandarin, () => {
+        if (!isAutoPlaying || isAutoPaused) return;
+
+        // STEP 2: Speak Arti (Bahasa Indonesia)
+        autoTimeoutId = setTimeout(() => {
+          if (!isAutoPlaying || isAutoPaused) return;
+          speakTextWithCallback(item.arti, 'id-ID', rateIndo, () => {
+            if (!isAutoPlaying || isAutoPaused) return;
+
+            // STEP 3: Delay lalu Next Card
+            autoTimeoutId = setTimeout(() => {
+              if (!isAutoPlaying || isAutoPaused) return;
+              autoCurrentIdx++;
+              playNextAutoStep();
+            }, delayMs);
+          });
+        }, 300);
+      });
     }
 
     function submitName() {
@@ -749,6 +1003,10 @@
       historyIndex = -1;
       getNextCard();
       renderMateriTable();
+
+      if (isAutoPlaying) {
+        stopAutoLearning();
+      }
     }
 
     function filterHskLevel() {
@@ -757,9 +1015,14 @@
     }
 
     function switchMainView(view) {
+      if (isAutoPlaying && view !== 'autolearn') {
+        stopAutoLearning();
+      }
+
       document.querySelectorAll('.btn-tab').forEach(btn => btn.classList.remove('active'));
       
       document.getElementById('view-flashcard').style.display = 'none';
+      document.getElementById('view-autolearn').style.display = 'none';
       document.getElementById('view-quiz').style.display = 'none';
       document.getElementById('view-timeattack').style.display = 'none';
       document.getElementById('view-materi').style.display = 'none';
@@ -768,11 +1031,20 @@
         document.getElementById('tab-flashcard').classList.add('active');
         document.getElementById('view-flashcard').style.display = 'block';
         document.getElementById('fc-controls').style.display = 'flex';
+        document.getElementById('auto-learn-controls').style.display = 'none';
         document.getElementById('quiz-controls').style.display = 'none';
+      } else if (view === 'autolearn') {
+        document.getElementById('tab-autolearn').classList.add('active');
+        document.getElementById('view-autolearn').style.display = 'block';
+        document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('auto-learn-controls').style.display = 'flex';
+        document.getElementById('quiz-controls').style.display = 'none';
+        document.getElementById('auto-progress-text').innerText = `Progres: 0 / ${getAutoAvailableDatabase().length}`;
       } else if (view === 'quiz') {
         document.getElementById('tab-quiz').classList.add('active');
         document.getElementById('view-quiz').style.display = 'flex';
         document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('auto-learn-controls').style.display = 'none';
         document.getElementById('quiz-controls').style.display = 'flex';
         document.getElementById('quiz-normal-settings').style.display = 'flex';
         document.getElementById('ta-settings').style.display = 'none';
@@ -780,6 +1052,7 @@
         document.getElementById('tab-timeattack').classList.add('active');
         document.getElementById('view-timeattack').style.display = 'flex';
         document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('auto-learn-controls').style.display = 'none';
         document.getElementById('quiz-controls').style.display = 'flex';
         document.getElementById('quiz-normal-settings').style.display = 'none';
         document.getElementById('ta-settings').style.display = 'flex';
@@ -787,6 +1060,7 @@
         document.getElementById('tab-materi').classList.add('active');
         document.getElementById('view-materi').style.display = 'flex';
         document.getElementById('fc-controls').style.display = 'none';
+        document.getElementById('auto-learn-controls').style.display = 'none';
         document.getElementById('quiz-controls').style.display = 'none';
         renderMateriTable();
       }
